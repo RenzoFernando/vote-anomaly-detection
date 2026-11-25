@@ -76,6 +76,49 @@ Evaluate the detection methods by comparing their results against the known anom
 
 Interpret the findings, discuss the effectiveness and limitations of the implemented techniques, and propose potential improvements.
 
+## Synthetic Dataset: First Steps
+
+The dataset is generated locally rather than downloaded from Kaggle. This keeps the
+exercise within the assignment's simulated-data requirement and makes the injected
+anomalies known and reproducible. Kaggle may be consulted for ideas about common
+column names, but its real-world election records should not be presented as
+simulated data.
+
+Generate the CSV files from the repository root:
+
+```bash
+python -m src.data_generation
+```
+
+By default, this writes 500 synthetic polling-station records to
+`data/raw/electoral_dataset.csv` and reference labels for the controlled anomalies
+to `data/ground_truth/anomaly_labels.csv`. The default is 25 anomalous records
+(5% of the dataset), with all four anomaly types represented. To choose another
+size, pass both counts; for example:
+
+```bash
+python -m src.data_generation --records 1000 --anomalies 50 --seed 42
+```
+
+The labels are kept separate from the
+dataset so they can be used to evaluate detection without leaking into its input.
+The generator uses a fixed seed by default; calling `generate_dataset(seed=...)`
+with the same seed produces the same data.
+
+Preprocessing and validation are available in `src/preprocessing.py`. Validation
+returns a row-level issue report and does not silently remove records. Run the
+validation report and focused automated checks with:
+
+```bash
+python -m src.preprocessing
+python -m pytest -q tests/test_data_pipeline.py
+```
+
+For evidence, capture (1) the generated CSV preview and anomaly-label table from
+`python -m src.data_generation`, (2) the findings from `python -m src.preprocessing`,
+and (3) the passing test output. Save the screenshots in your personal folder
+under `docs/evidence/`.
+
 ## Project Structure
 
 The repository is organized as follows:
