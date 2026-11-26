@@ -1,0 +1,26 @@
+record_id,method,reason
+REC-0005,rule,R2: negative count.
+REC-0008,rule,R2: negative count.
+REC-0038,rule,R2: negative count.
+REC-0047,rule,R2: negative count.
+REC-0054,rule,R2: negative count.
+REC-0088,rule,R2: negative count.
+REC-0094,rule,R2: negative count.
+REC-0297,rule,R2: negative count.
+REC-0321,rule,R2: negative count.
+REC-0355,rule,R2: negative count.
+REC-0426,rule,R2: negative count.
+REC-0434,rule,R2: negative count.
+REC-0466,rule,R2: negative count.
+REC-0301,rule,R3: total_votes differs from the sum of ballot categories.
+REC-0318,rule,R3: total_votes differs from the sum of ballot categories.
+REC-0330,rule,R3: total_votes differs from the sum of ballot categories.
+REC-0465,rule,R3: total_votes differs from the sum of ballot categories.
+REC-0498,rule,R3: total_votes differs from the sum of ballot categories.
+REC-0168,rule,R4: total_votes exceeds registered_voters.
+REC-0272,rule,R4: total_votes exceeds registered_voters.
+REC-0289,rule,R4: total_votes exceeds registered_voters.
+REC-0385,rule,R4: total_votes exceeds registered_voters.
+REC-0181,rule,R5: station_id repeated.
+REC-0261,rule,R5: station_id repeated.
+REC-0488,rule,R5: station_id repeated.

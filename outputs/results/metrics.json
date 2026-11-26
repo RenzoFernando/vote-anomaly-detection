@@ -1,0 +1,135 @@
+{
+  "mode": "complete",
+  "records": 500,
+  "alert_rows": 25,
+  "stages": {
+    "rule": "executed",
+    "statistical": "executed",
+    "analysis": "executed",
+    "visualizations": "executed"
+  },
+  "metrics": {
+    "TP": 25,
+    "FP": 0,
+    "FN": 0,
+    "TN": 475,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "confusion_matrix": [
+      [
+        475,
+        0
+      ],
+      [
+        0,
+        25
+      ]
+    ]
+  },
+  "breakdown": {
+    "by_method": {
+      "rule": {
+        "TP": 25,
+        "FP": 0,
+        "FN": 0,
+        "TN": 475,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "confusion_matrix": [
+          [
+            475,
+            0
+          ],
+          [
+            0,
+            25
+          ]
+        ]
+      },
+      "statistical": {
+        "TP": 0,
+        "FP": 0,
+        "FN": 25,
+        "TN": 475,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "confusion_matrix": [
+          [
+            475,
+            0
+          ],
+          [
+            25,
+            0
+          ]
+        ]
+      }
+    },
+    "by_anomaly_type": [
+      {
+        "anomaly_type": "duplicate_station_id",
+        "injected": 3,
+        "rule": 3,
+        "statistical": 0,
+        "both": 0,
+        "combined": 3
+      },
+      {
+        "anomaly_type": "negative_vote_count",
+        "injected": 13,
+        "rule": 13,
+        "statistical": 0,
+        "both": 0,
+        "combined": 13
+      },
+      {
+        "anomaly_type": "turnout_over_capacity",
+        "injected": 4,
+        "rule": 4,
+        "statistical": 0,
+        "both": 0,
+        "combined": 4
+      },
+      {
+        "anomaly_type": "vote_total_mismatch",
+        "injected": 5,
+        "rule": 5,
+        "statistical": 0,
+        "both": 0,
+        "combined": 5
+      }
+    ],
+    "statistical_increment": {
+      "additional_tp": 0,
+      "additional_fp": 0
+    },
+    "false_positives": [],
+    "false_negatives": []
+  },
+  "analysis": {
+    "record_count": 500,
+    "finite_participation_count": 500,
+    "missing_participation_count": 0,
+    "nonfinite_participation_count": 0,
+    "invalid_participation_count": 0,
+    "over_100_percent_count": 4,
+    "participation_rate": {
+      "mean": 0.7233424512666745,
+      "median": 0.726189733320475,
+      "min": 0.4011142061281337,
+      "max": 1.0038167938931297,
+      "q1": 0.6309086054317974,
+      "q3": 0.8177334915538182,
+      "std": 0.10764531331091992
+    }
+  },
+  "figures": [
+    "figures/participation_distribution.png",
+    "figures/registered_vs_votes.png",
+    "figures/detection_by_anomaly_type.png",
+    "figures/confusion_and_metrics.png"
+  ]
+}
