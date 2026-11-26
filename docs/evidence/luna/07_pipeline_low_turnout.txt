@@ -1,4 +1,8 @@
-REC-0240: turnout 5.00%; coherent ballot counts
-Stage status: {'rule': 'diana_validation_baseline', 'statistical': 'executed', 'analysis': 'executed', 'visualizations': 'pending'}
-Low-turnout coverage: {'anomaly_type': 'low_turnout', 'injected': 1, 'rule': 0, 'statistical': 1, 'both': 0, 'combined': 1}
-Statistical increment: {'additional_tp': 1, 'additional_fp': 0}
+Notebook scenario: generate_dataset(n_records=240, n_anomalies=4, seed=19)
+Pipeline exports: outputs/temp/luna/notebook/low-turnout/results
+record_id  registered_voters  total_votes  participation_rate
+ REC-0240                500           25                0.05
+record_id      method                                                                reason
+ REC-0240 statistical participation_rate 0.05 is below IQR lower bound 0.35477358873813925.
+low_turnout: {"anomaly_type": "low_turnout", "injected": 1, "rule": 0, "statistical": 1, "both": 0, "combined": 1}
+statistical_increment: {"additional_tp": 1, "additional_fp": 0}

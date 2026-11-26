@@ -1,3 +1,4 @@
+$ python -m src.main --output-dir outputs/temp/luna/verify
 VoteAnomaly (partial run) | 500 records | 26 alerts
   rule: diana_validation_baseline
   statistical: executed
@@ -5,9 +6,50 @@ VoteAnomaly (partial run) | 500 records | 26 alerts
   visualizations: pending
 TP=25  FP=1  FN=0  TN=474
 Precision=0.9615  Recall=1.0000  F1=0.9804
-Results: outputs\temp\luna\partial-run\results
-HTML report: outputs\temp\luna\partial-run\results\report.html
-Statistical detector against the committed simulated labels:
-{"TP": 0, "FP": 0, "FN": 25, "TN": 475}
-Require complete exit code: 2
+Results: outputs\temp\luna\verify\results
+HTML report: outputs\temp\luna\verify\results\report.html
+alerts.csv columns: ['record_id', 'method', 'reason']
+Statistical alert rows: 0
+analysis:
+{
+  "record_count": 500,
+  "finite_participation_count": 500,
+  "missing_participation_count": 0,
+  "nonfinite_participation_count": 0,
+  "invalid_participation_count": 0,
+  "over_100_percent_count": 4,
+  "participation_rate": {
+    "mean": 0.7233424512666745,
+    "median": 0.726189733320475,
+    "min": 0.4011142061281337,
+    "max": 1.0038167938931297,
+    "q1": 0.6309086054317974,
+    "q3": 0.8177334915538182,
+    "std": 0.1076453133109199
+  }
+}
+breakdown.by_method.statistical:
+{
+  "TP": 0,
+  "FP": 0,
+  "FN": 25,
+  "TN": 475,
+  "precision": 0.0,
+  "recall": 0.0,
+  "f1": 0.0,
+  "confusion_matrix": [
+    [
+      475,
+      0
+    ],
+    [
+      25,
+      0
+    ]
+  ]
+}
+All four CLI exports match the notebook team run byte for byte.
+
+$ python -m src.main --require-complete --output-dir outputs/temp/luna/verify-complete
 VoteAnomaly: Missing project stages: rule, visualizations
+Exit code: 2

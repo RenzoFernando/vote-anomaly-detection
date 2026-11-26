@@ -1,2 +1,4 @@
-........................                                                 [100%]
-24 passed in 4.54s
+$ python -m pytest -q tests/test_statistics.py tests/test_analysis.py tests/test_luna_pipeline.py
+..........................                                               [100%]
+26 passed in 3.16s
+Exit code: 0

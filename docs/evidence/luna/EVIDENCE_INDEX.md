@@ -1,40 +1,47 @@
 # Evidencias de Luna Martínez
 
-Las salidas se obtuvieron con datos simulados. La muestra de 12 mesas sirve para verificar el método. La ejecución del pipeline usa el conjunto del proyecto o un escenario generado de forma reproducible.
+Las ejecuciones se hicieron el 26 de noviembre de 2026 en Windows con Python 3.13.9 de Anaconda, pandas 2.3.3 y NumPy 2.3.5.
 
-| Evidencia guardada | Qué se verificó |
+| Evidencia de ejecución | Resultado |
 | --- | --- |
-| [01_iqr_alerts.csv](01_iqr_alerts.csv) | Una alerta estadística para M007. Su tasa es 1,15 y el límite superior es aproximadamente 0,78125. |
-| [02_descriptive_summary.json](02_descriptive_summary.json) | 12 tasas finitas, una superior al 100 % y participación media de 71,51 %. |
-| [03_pytest.txt](03_pytest.txt) | 24 pruebas de Luna aprobadas. |
-| [04_notebook_execution.txt](04_notebook_execution.txt) | Las cuatro celdas de código ejecutadas en IPython 9.10.0. El [notebook](../../../notebooks/luna_exploratory_analysis.ipynb) conserva las salidas de esa ejecución. |
-| [05_pytest_integration.txt](05_pytest_integration.txt) | Ocho pruebas de integración del repositorio aprobadas. |
-| [06_pipeline_partial.txt](06_pipeline_partial.txt) | Pipeline de 500 registros con IQR y análisis ejecutados. El modo completo devuelve código 2 e identifica las etapas pendientes. |
-| [07_pipeline_low_turnout.txt](07_pipeline_low_turnout.txt) | Escenario de 240 registros generado con semilla 19. En REC-0240 se usaron 25 votos coherentes y 500 electores, y la evaluación registró un verdadero positivo exclusivo del IQR. |
+| [01_iqr_alerts.csv](01_iqr_alerts.csv) y [02_descriptive_summary.json](02_descriptive_summary.json) | Comprobación auxiliar con 12 registros. M007 alertó con una tasa de 115 % y un límite superior de 78,125 %. |
+| [03_pytest.txt](03_pytest.txt) | 26 pruebas de Luna aprobadas, incluidas dos pruebas a través del pipeline con los módulos reales. |
+| [04_notebook_execution.txt](04_notebook_execution.txt) | Cuatro celdas de código ejecutadas con el kernel `python3` y verificadas con `nbformat`. El [notebook](../../../notebooks/luna_exploratory_analysis.ipynb) conserva las salidas. También se comprobó **Run All** en VS Code con el kernel de Anaconda. |
+| [05_pytest_integration.txt](05_pytest_integration.txt) | Ocho pruebas de integración de Renzo aprobadas. |
+| [06_pipeline_partial.txt](06_pipeline_partial.txt) | 500 registros de Diana. Las etapas de análisis e IQR se ejecutaron. Los cuatro archivos exportados coinciden byte a byte con los de la ejecución del equipo en el notebook. |
+| [07_pipeline_low_turnout.txt](07_pipeline_low_turnout.txt) | Una alerta IQR para REC-0240, con 25 votos coherentes, 500 electores y un límite inferior de 35,48 %. La evaluación registró un verdadero positivo adicional. |
+| [08_pytest_full.txt](08_pytest_full.txt) | Las 56 pruebas de la suite completa pasaron. |
 
-## Reproducción y capturas pendientes
+## Capturas de VS Code
 
-Desde la raíz de esta copia del repositorio, activa el entorno donde instalaste `requirements.txt`. Ejecuta:
+- [01_iqr_alerts.png](01_iqr_alerts.png) muestra la alerta de REC-0240 y la evaluación del escenario controlado.
+- [02_descriptive_summary.png](02_descriptive_summary.png) muestra el resumen exportado de los 500 registros.
+- [03_pytest.png](03_pytest.png) muestra la transcripción real de la suite completa abierta en el editor.
+- [04_notebook_executed.png](04_notebook_executed.png) muestra el kernel seleccionado, los indicadores de ejecución y la vista previa de los registros preparados.
+
+## Reproducción
+
+Desde la raíz, con las dependencias de `requirements.txt` instaladas en el entorno activo, ejecuta:
 
 ```bash
-python -m pytest -q tests/test_statistics.py tests/test_analysis.py
+python -m pytest -q tests/test_statistics.py tests/test_analysis.py tests/test_luna_pipeline.py
 python -m pytest -q tests/test_integration.py
+python -m pytest -q
 python -m src.main --output-dir outputs/temp/luna/verify
-jupyter lab
+python -m nbconvert --to notebook --execute --inplace --ExecutePreprocessor.timeout=60 notebooks/luna_exploratory_analysis.ipynb
 ```
 
-En JupyterLab abre `notebooks/luna_exploratory_analysis.ipynb`, elige el kernel Python del entorno y usa **Restart Kernel and Run All Cells**. Durante esta verificación, el arranque estándar del kernel se quedó en `socket.accept` al construir el bucle de eventos de Windows. Las cuatro celdas se ejecutaron en orden mediante `IPython.core.interactiveshell.InteractiveShell.run_cell` y el archivo resultante se validó con `nbformat`.
+En VS Code, abre el notebook, elige el kernel con las dependencias y pulsa **Run All**. El notebook guarda el conjunto del equipo en `outputs/temp/luna/notebook/team/results/` y el escenario controlado en `outputs/temp/luna/notebook/low-turnout/results/`. Cada ejecución exporta los registros preparados, las alertas, las métricas y el informe HTML.
 
-La autorización de la ventana de captura expiró. Para completar las capturas, guarda estos PNG en esta carpeta:
+En `metrics.json`, revisa `analysis`, `stages.statistical`, `stages.analysis` y `breakdown.by_method.statistical`. En `alerts.csv`, verifica las columnas `record_id`, `method` y `reason` en ese orden. En el conjunto del equipo el filtro `method == "statistical"` queda vacío. En el caso controlado incluye REC-0240. El modo `--require-complete` devolvió código 2 e identificó las etapas pendientes de reglas y visualizaciones. La ejecución parcial utilizó `diana_validation_baseline` para las reglas.
 
-1. `01_iqr_alerts.png` con la celda de alertas y la fila M007, incluido el umbral.
-2. `02_descriptive_summary.png` con la celda del JSON y sus conteos y cuartiles.
-3. `03_pytest.png` con el comando de pruebas de Luna y el resultado de pytest.
-4. `04_notebook_executed.png` con el nombre del notebook, los números de ejecución y la salida de M007 y M008 visible.
+## Notas para el informe
 
-## Notas para el informe compartido
+- En el conjunto del equipo la participación media fue de 72,33 %, con Q1 de 63,09 % y Q3 de 81,77 %. Cuatro tasas superaron el 100 %. El límite superior del IQR fue de 109,80 %, por lo que esas cuatro tasas quedaron dentro de los límites, al igual que el resto de las observaciones.
+- El IQR usa cuartiles lineales y exige al menos cuatro tasas finitas. Los límites se incluyen en el intervalo y coinciden si IQR vale cero. El método admite tasas finitas fuera de `[0, 1]` y requiere `record_id` únicos. Las repeticiones de `station_id` se revisan en la validación.
+- La baja participación de REC-0240 produjo una alerta por debajo del límite inferior pese a que sus conteos eran coherentes. En la muestra auxiliar, M008 mostró 154 votos reportados frente a 124 papeletas sumadas, con una participación de 73,33 % dentro de los límites. Los dos casos ilustran qué observa cada método.
+- Los cuartiles dependen de la distribución. Las diferencias legítimas entre grupos pueden generar falsas alarmas. Las alertas de estos escenarios simulados identifican registros para revisión.
 
-- El IQR compara únicamente la tasa de cada registro con los límites derivados de su distribución. Usa cuartiles lineales, exige al menos cuatro tasas finitas y alerta solo fuera de los límites. Con IQR cero los dos límites coinciden. Las tasas finitas por debajo de 0 o por encima de 1 siguen en el cálculo. El detector exige `record_id` únicos y admite `station_id` repetidos.
-- M007 entró en la cola superior. En M008 se reportaron 154 votos frente a 124 papeletas sumadas, y su participación de 73,33 % quedó dentro de los límites. Las reglas de consistencia complementan al IQR en ese caso.
-- En los 500 registros del repositorio, el IQR no generó alertas y la validación de Diana cubrió las 25 anomalías inyectadas, con un falso positivo. En el escenario controlado de participación baja, el IQR añadió una detección con conteos coherentes. Estos resultados corresponden a dos distribuciones simuladas concretas.
-- Las diferencias legítimas entre grupos pueden producir falsos positivos. Los cuartiles se desplazan cuando hay muchas observaciones anómalas o cuando cambia la composición del conjunto. Las alertas indican casos para revisar y por sí solas no establecen fraude.
+## Respaldo local de la copia temporal
+
+Se comprobó que los 13 commits accesibles de `tmp/luna-work` y sus ocho archivos de evidencia registrados estaban en el historial del repositorio original. Se respaldaron los 137 archivos de salida ignorados por Git en `outputs/temp/luna/archive/previous-run-outputs.zip` y se comprobó cada entrada con SHA-256. La copia preexistente se retiró de la raíz mediante un traslado a la carpeta temporal de Windows.
