@@ -1,0 +1,41 @@
+Python 3.11.9 | IPython 9.10.0 | pandas 3.0.2
+Notebook: notebooks/luna_exploratory_analysis.ipynb
+Cell 1 (load-fixture): OK, 1 output(s)
+   record_id  registered_voters  total_votes  participation_rate
+0       M001                200          142            0.710000
+1       M002                180          114            0.633333
+2       M003                220          149            0.677273
+3       M004                250          174            0.696000
+4       M005                160          104            0.650000
+5       M006                240          156            0.650000
+6       M007                200          230            1.150000
+7       M008                210          154            0.733333
+8       M009                190          123            0.647368
+9       M010                260          174            0.669231
+10      M011                230          161            0.700000
+11      M012                170          113            0.664706
+Cell 2 (show-summary): OK, 1 output(s)
+{
+  "record_count": 12,
+  "finite_participation_count": 12,
+  "missing_participation_count": 0,
+  "nonfinite_participation_count": 0,
+  "invalid_participation_count": 0,
+  "over_100_percent_count": 1,
+  "participation_rate": {
+    "mean": 0.715103705547978,
+    "median": 0.6732517482517482,
+    "min": 0.6333333333333333,
+    "max": 1.15,
+    "q1": 0.65,
+    "q3": 0.7024999999999999,
+    "std": 0.14010162702024645
+  }
+}
+Cell 3 (show-alerts): OK, 1 output(s)
+record_id      method                                                               reason
+     M007 statistical participation_rate 1.15 is above IQR upper bound 0.7812499999999998.
+Cell 4 (check-cases): OK, 1 output(s)
+M007 | participaci├│n 115.00% | total reportado 230 | suma de papeletas 230 | alerta IQR: s├¡
+M008 | participaci├│n 73.33% | total reportado 154 | suma de papeletas 124 | alerta IQR: no
+4 code cells executed successfully. Saved outputs validated against nbformat.

@@ -1,0 +1,4 @@
+REC-0240: turnout 5.00%; coherent ballot counts
+Stage status: {'rule': 'diana_validation_baseline', 'statistical': 'executed', 'analysis': 'executed', 'visualizations': 'pending'}
+Low-turnout coverage: {'anomaly_type': 'low_turnout', 'injected': 1, 'rule': 0, 'statistical': 1, 'both': 0, 'combined': 1}
+Statistical increment: {'additional_tp': 1, 'additional_fp': 0}

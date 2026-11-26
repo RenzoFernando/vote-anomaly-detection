@@ -1,0 +1,13 @@
+VoteAnomaly (partial run) | 500 records | 26 alerts
+  rule: diana_validation_baseline
+  statistical: executed
+  analysis: executed
+  visualizations: pending
+TP=25  FP=1  FN=0  TN=474
+Precision=0.9615  Recall=1.0000  F1=0.9804
+Results: outputs\temp\luna\partial-run\results
+HTML report: outputs\temp\luna\partial-run\results\report.html
+Statistical detector against the committed simulated labels:
+{"TP": 0, "FP": 0, "FN": 25, "TN": 475}
+Require complete exit code: 2
+VoteAnomaly: Missing project stages: rule, visualizations
