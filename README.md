@@ -119,6 +119,26 @@ For evidence, capture (1) the generated CSV preview and anomaly-label table from
 and (3) the passing test output. Save the screenshots in your personal folder
 under `docs/evidence/`.
 
+## Run the Detection Pipeline
+
+From the repository root, after installing `requirements.txt`:
+
+```bash
+python -m src.main
+python -m src.main --generate --records 500 --anomalies 25 --seed 42 --output-dir outputs/temp/demo
+python -m pytest -q
+```
+
+The first command reads the simulated CSVs committed in `data/`. The second
+generates a fresh dataset in memory. To use another simulated CSV pair, pass
+`--dataset` and `--labels`. A run exports the processed records, alerts and
+evaluation to `outputs/results/` by default.
+
+A partial run can use Diana's validation as the rule baseline. The CLI and
+`metrics.json` identify the stages used. Add `--require-complete` to require
+both project detectors, exploratory analysis and visualizations. See the
+[integration contract](docs/TECHNICAL_CONTRACT.md) for the module interfaces.
+
 ## Project Structure
 
 The repository is organized as follows:
