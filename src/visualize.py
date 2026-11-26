@@ -6,6 +6,7 @@ returns four distinct PNG paths inside ``output_dir`` (the contract used by
 they never influence detection.
 """
 
+from collections.abc import Iterable
 from pathlib import Path
 
 import matplotlib
@@ -86,7 +87,7 @@ def _iqr_fences(rates: pd.Series) -> tuple[float, float] | None:
     return float(q1 - 1.5 * iqr), float(q3 + 1.5 * iqr)
 
 
-def plot_participation_distribution(prepared, status, path: Path) -> Path:
+def plot_participation_distribution(prepared, status, path: Path, *, include_iqr: bool) -> Path:
     """Fig. 1: histogram of participation with IQR fences and 100% capacity line."""
     rates = participation_rates(prepared)
     finite = np.isfinite(rates)
@@ -99,7 +100,7 @@ def plot_participation_distribution(prepared, status, path: Path) -> Path:
             color=[COLORS[k] for k in groups],
             label=[_legend_label(k, int(len(v))) for k, v in groups.items()],
         )
-    fences = _iqr_fences(rates)
+    fences = _iqr_fences(rates) if include_iqr else None
     if fences:
         for value, name in zip(fences, ("Límite inferior IQR", "Límite superior IQR")):
             ax.axvline(value, color=COLORS["statistical"], linestyle="--", linewidth=1.2, label=name)
@@ -129,17 +130,16 @@ def plot_registered_vs_votes(prepared, status, path: Path) -> Path:
     return _save(fig, path)
 
 
-def plot_detection_by_anomaly_type(prepared, alerts, ground_truth, path: Path) -> Path:
+def plot_detection_by_anomaly_type(details, path: Path) -> Path:
     """Fig. 3: for each injected anomaly type, how many each detector caught."""
-    methods = list(DETECTION_METHODS)  # a detector with zero alerts must still appear (as zero)
-    _, details = evaluate_breakdown(alerts, ground_truth, prepared["record_id"], methods)
     rows = details["by_anomaly_type"]
     fig, ax = plt.subplots(figsize=(8.5, 4.8))
     if rows:
         labels = [ANOMALY_LABELS.get(r["anomaly_type"], r["anomaly_type"] or "Sin tipo") for r in rows]
         series = [("Inyectadas", [r["injected"] for r in rows], "#455a64")]
         series += [
-            (f"Detectadas por {METHOD_LABELS[m]}", [r[m] for r in rows], COLORS[m]) for m in methods
+            (f"Detectadas por {METHOD_LABELS[m]}", [r[m] for r in rows], COLORS[m])
+            for m, scores in details["by_method"].items() if scores is not None
         ]
         positions = np.arange(len(rows))
         width = 0.8 / len(series)
@@ -155,10 +155,8 @@ def plot_detection_by_anomaly_type(prepared, alerts, ground_truth, path: Path) -
     return _save(fig, path)
 
 
-def plot_confusion_and_metrics(prepared, alerts, ground_truth, path: Path) -> Path:
+def plot_confusion_and_metrics(combined, details, path: Path) -> Path:
     """Fig. 4: combined confusion matrix and precision/recall/F1 per detector."""
-    methods = list(DETECTION_METHODS)  # a detector with zero alerts must still appear (as zero)
-    combined, details = evaluate_breakdown(alerts, ground_truth, prepared["record_id"], methods)
     fig, (ax_matrix, ax_bars) = plt.subplots(1, 2, figsize=(11, 4.5), gridspec_kw={"width_ratios": [1, 1.3]})
 
     matrix = np.array(combined["confusion_matrix"])
@@ -173,7 +171,8 @@ def plot_confusion_and_metrics(prepared, alerts, ground_truth, path: Path) -> Pa
     ax_matrix.set_title("Matriz de confusión (combinada)")
 
     scored = [("Combinada", combined)] + [
-        (METHOD_LABELS[m], details["by_method"][m]) for m in methods
+        (METHOD_LABELS[m], scores)
+        for m, scores in details["by_method"].items() if scores is not None
     ]
     metrics = ("precision", "recall", "f1")
     positions = np.arange(len(metrics))
@@ -189,24 +188,32 @@ def plot_confusion_and_metrics(prepared, alerts, ground_truth, path: Path) -> Pa
 
 
 def create_visualizations(
-    prepared: pd.DataFrame, alerts: pd.DataFrame, ground_truth: pd.DataFrame, output_dir: Path
+    prepared: pd.DataFrame,
+    alerts: pd.DataFrame,
+    ground_truth: pd.DataFrame,
+    output_dir: Path,
+    *,
+    available_methods: Iterable[str] = DETECTION_METHODS,
 ) -> list[Path]:
     """Write the four figures to ``output_dir`` and return their paths in order.
 
-    Figures 3 and 4 always show both detectors, so one that raised no alerts is
-    drawn as zero instead of silently disappearing.
+    Only executed detectors appear. A detector that ran without raising alerts
+    is drawn as zero.
     """
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     if "record_id" not in prepared or "record_id" not in ground_truth:
         raise ValueError("Prepared records and ground truth require a record_id column.")
-    if not {"record_id", "method"}.issubset(alerts.columns):
-        raise ValueError("Alerts require record_id and method columns.")
+    if not {"record_id", "method", "reason"}.issubset(alerts.columns):
+        raise ValueError("Alerts require record_id, method and reason columns.")
 
+    combined, details = evaluate_breakdown(alerts, ground_truth, prepared["record_id"], available_methods)
     status = _status(prepared, alerts, ground_truth)
     paths = [output_dir / name for name in FIGURE_FILES]
-    plot_participation_distribution(prepared, status, paths[0])
+    plot_participation_distribution(
+        prepared, status, paths[0], include_iqr=details["by_method"]["statistical"] is not None
+    )
     plot_registered_vs_votes(prepared, status, paths[1])
-    plot_detection_by_anomaly_type(prepared, alerts, ground_truth, paths[2])
-    plot_confusion_and_metrics(prepared, alerts, ground_truth, paths[3])
+    plot_detection_by_anomaly_type(details, paths[2])
+    plot_confusion_and_metrics(combined, details, paths[3])
     return paths

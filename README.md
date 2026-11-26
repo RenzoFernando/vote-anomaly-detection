@@ -124,7 +124,7 @@ under `docs/evidence/`.
 From the repository root, after installing `requirements.txt`:
 
 ```bash
-python -m src.main
+python -m src.main --require-complete
 python -m src.main --generate --records 500 --anomalies 25 --seed 42 --output-dir outputs/temp/demo
 python -m pytest -q
 ```
@@ -189,7 +189,7 @@ A video presentation with a maximum duration of **8 minutes**, covering:
 - System functionality and practical demonstration.
 - Results, findings, and conclusions.
 
-### 3. GitHub Repository
+## Supporting Materials in This Repository
 
 A structured repository containing:
 

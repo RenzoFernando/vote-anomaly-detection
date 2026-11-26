@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import sys
+
 import pandas as pd
 import pytest
 
@@ -8,6 +10,7 @@ from src.detection.rules import detect_rule_anomalies
 from src.detection.statistical import detect_statistical_anomalies
 from src.main import run_pipeline
 from src.preprocessing import preprocess_dataset
+from src import visualize
 from src.visualize import FIGURE_FILES, _iqr_fences, _status, create_visualizations
 
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
@@ -115,6 +118,7 @@ def test_iqr_fences_match_the_statistical_detector():
         (lambda p, a, l: (p.drop(columns="record_id"), a, l), "record_id"),
         (lambda p, a, l: (p, a, l.drop(columns="record_id")), "record_id"),
         (lambda p, a, l: (p, a.drop(columns="method"), l), "method"),
+        (lambda p, a, l: (p, a.drop(columns="reason"), l), "reason"),
     ],
 )
 def test_rejects_missing_columns(tmp_path, bad_args, message):
@@ -136,3 +140,24 @@ def test_full_pipeline_runs_in_complete_mode_with_real_stages(tmp_path):
     assert report["metrics"]["FP"] == 0
     html = (tmp_path / "results" / "report.html").read_text(encoding="utf-8")
     assert "participation distribution" in html
+
+
+def test_partial_pipeline_omits_pending_iqr_from_figures(tmp_path, monkeypatch):
+    monkeypatch.setitem(sys.modules, "src.detection.statistical", None)
+    dataset, labels = generate_dataset(n_records=50, n_anomalies=4)
+    plot_labels = {}
+    save = visualize._save
+
+    def capture_labels(figure, path):
+        plot_labels[path.name] = [
+            label for axis in figure.axes for label in axis.get_legend_handles_labels()[1]
+        ]
+        return save(figure, path)
+
+    monkeypatch.setattr(visualize, "_save", capture_labels)
+    report = run_pipeline(dataset, labels, tmp_path)
+
+    assert report["stages"]["statistical"] == "pending"
+    assert report["breakdown"]["by_method"]["statistical"] is None
+    assert all("IQR" not in label for labels in plot_labels.values() for label in labels)
+    assert "Reglas" in plot_labels["confusion_and_metrics.png"]

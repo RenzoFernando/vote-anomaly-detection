@@ -110,9 +110,10 @@ def test_one_run_composes_all_team_interfaces(tmp_path, monkeypatch):
         calls.append("analysis")
         return {"record_count": len(prepared)}
 
-    def visualize(prepared, alerts, ground_truth, output_dir):
+    def visualize(prepared, alerts, ground_truth, output_dir, *, available_methods):
         check_prepared(prepared)
         calls.append("visualizations")
+        assert tuple(available_methods) == ("rule", "statistical")
         pd.testing.assert_frame_equal(ground_truth, labels)
         assert list(alerts["record_id"]) == [known, known, normal]
         paths = [output_dir / f"figure {number}.txt" for number in range(1, 5)]

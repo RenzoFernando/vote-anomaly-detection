@@ -111,7 +111,10 @@ def run_pipeline(
             figures_dir = staging / "figures"
             figures_dir.mkdir()
             figure_paths = []
-            paths = visualize(prepared.copy(), alerts.copy(), ground_truth.copy(), figures_dir)
+            paths = visualize(
+                prepared.copy(), alerts.copy(), ground_truth.copy(), figures_dir,
+                available_methods=available_methods,
+            )
             for path in paths:
                 figure_path = (figures_dir / Path(path)).resolve()
                 if not figure_path.is_relative_to(figures_dir) or not figure_path.is_file():

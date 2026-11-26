@@ -42,13 +42,15 @@ complete run so those links work.
 | `src/detection/rules.py` | `detect_rule_anomalies(prepared)` | Alert DataFrame with `method="rule"` |
 | `src/detection/statistical.py` | `detect_statistical_anomalies(prepared)` | Alert DataFrame with `method="statistical"` |
 | `src/analysis.py` | `summarize_data(prepared)` | Descriptive results as JSON-compatible Python values. Use `None` for undefined statistics. |
-| `src/visualize.py` | `create_visualizations(prepared, alerts, ground_truth, output_dir)` | Iterable of four distinct paths to files saved inside `output_dir` |
+| `src/visualize.py` | `create_visualizations(prepared, alerts, ground_truth, output_dir, *, available_methods=DETECTION_METHODS)` | Iterable of four distinct paths to files saved inside `output_dir` |
 
 Each detector returns `record_id`, `method` and `reason`, including those
 columns for an empty result. Use `record_id` to highlight alerts and to
 evaluate the confusion matrix in the visualizations. The detectors and
 exploratory analysis receive only the prepared election records. The
 visualization stage also receives the labels for the confusion matrix.
+The pipeline passes the executed detection methods to the visualization stage,
+so a pending detector stays absent while an executed detector can show zeros.
 
 ## Partial runs
 
