@@ -22,6 +22,19 @@ dataset or reference IDs cause evaluation to fail.
 rows and predicted classes in the columns, in negative-to-positive order.
 Ratios with zero denominators are reported as zero.
 
+The `breakdown` records scores for each executed detector, counts by
+injected anomaly type, and the IDs of false positives and false negatives.
+The `combined` column counts the union of alerted records. The `both`
+column counts the intersection. Pending detectors and comparisons involving
+them use `null`. A detector that ran and found nothing contributes zero
+alerts. `statistical_increment` counts the true and false positives among
+records flagged only by the statistical detector.
+
+`outputs/results/report.html` renders these results without online
+dependencies. If visualizations ran, it links to the four current files
+under `outputs/figures/`. Keep the two folders together when sharing a
+complete run so those links work.
+
 ## Interfaces for the remaining modules
 
 | Module | Function | Return value |

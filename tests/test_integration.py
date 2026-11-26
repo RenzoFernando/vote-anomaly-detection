@@ -7,7 +7,13 @@ from types import ModuleType
 import pandas as pd
 import pytest
 
-from src.data_generation import GROUND_TRUTH_PATH, PROJECT_ROOT, RAW_DATA_PATH, generate_dataset
+from src.data_generation import (
+    BALLOT_COLUMNS,
+    GROUND_TRUTH_PATH,
+    PROJECT_ROOT,
+    RAW_DATA_PATH,
+    generate_dataset,
+)
 from src.main import ALERT_COLUMNS, STAGES, run_pipeline
 
 
@@ -41,14 +47,23 @@ def test_diana_csvs_feed_the_partial_pipeline(tmp_path, absent_team_modules):
     assert report["metrics"]["FP"] > 0
     assert report["metrics"]["FN"] == 0
     assert sum(map(sum, report["metrics"]["confusion_matrix"])) == len(dataset)
+    assert report["breakdown"]["by_method"]["statistical"] is None
+    html = (results / "report.html").read_text(encoding="utf-8")
+    assert f"{len(dataset)} registros simulados" in html
+    assert "Línea base de consistencia" in html
+    assert "Matriz de confusión" in html
+    assert "Diana" not in html
+    false_positive = report["breakdown"]["false_positives"][0]
+    assert false_positive["record_id"] in html
 
 
-def test_generated_data_runs_through_cli_reproducibly(tmp_path):
+@pytest.mark.parametrize(("records", "anomalies", "seed"), [(24, 6, 7), (240, 4, 19), (240, 4, 42)])
+def test_generated_data_runs_through_cli_reproducibly(tmp_path, records, anomalies, seed):
     def run_cli(output_dir):
         return subprocess.run(
             [
-                sys.executable, "-m", "src.main", "--generate", "--records", "24",
-                "--anomalies", "6", "--seed", "7", "--output-dir", str(output_dir),
+                sys.executable, "-m", "src.main", "--generate", "--records", str(records),
+                "--anomalies", str(anomalies), "--seed", str(seed), "--output-dir", str(output_dir),
             ],
             cwd=PROJECT_ROOT,
             check=True,
@@ -58,10 +73,10 @@ def test_generated_data_runs_through_cli_reproducibly(tmp_path):
 
     first = tmp_path / "first"
     second = tmp_path / "second"
-    assert "24 records" in run_cli(first).stdout
+    assert f"{records} records" in run_cli(first).stdout
     run_cli(second)
 
-    for name in ("processed_dataset.csv", "alerts.csv", "metrics.json"):
+    for name in ("processed_dataset.csv", "alerts.csv", "metrics.json", "report.html"):
         relative = Path("results") / name
         assert (first / relative).read_bytes() == (second / relative).read_bytes()
 
@@ -86,7 +101,7 @@ def test_one_run_composes_all_team_interfaces(tmp_path, monkeypatch):
         check_prepared(prepared)
         calls.append("statistical")
         return pd.DataFrame(
-            [(known, "statistical", "same record"), (normal, "statistical", "another record")],
+            [(known, "statistical", "same record"), (normal, "statistical", "rate < 0.1")],
             columns=ALERT_COLUMNS,
         )
 
@@ -100,7 +115,7 @@ def test_one_run_composes_all_team_interfaces(tmp_path, monkeypatch):
         calls.append("visualizations")
         pd.testing.assert_frame_equal(ground_truth, labels)
         assert list(alerts["record_id"]) == [known, known, normal]
-        paths = [output_dir / f"figure-{number}.txt" for number in range(1, 5)]
+        paths = [output_dir / f"figure {number}.txt" for number in range(1, 5)]
         for path in paths:
             path.write_text("figure fixture", encoding="utf-8")
         return paths
@@ -119,6 +134,49 @@ def test_one_run_composes_all_team_interfaces(tmp_path, monkeypatch):
     assert report["analysis"] == {"record_count": 10}
     assert len(report["figures"]) == 4
     assert all((tmp_path / figure).is_file() for figure in report["figures"])
+    assert report["breakdown"]["statistical_increment"] == {"additional_tp": 0, "additional_fp": 1}
+    html = (tmp_path / "results" / "report.html").read_text(encoding="utf-8")
+    assert 'href="../figures/figure%201.txt"' in html
+    assert "rate &lt; 0.1" in html
+
+
+def test_low_turnout_with_coherent_counts_can_add_a_detection(
+    tmp_path, monkeypatch, absent_team_modules
+):
+    dataset, labels = generate_dataset(n_records=240, n_anomalies=4, seed=19)
+    candidates = dataset.loc[
+        ~dataset["record_id"].isin(labels["record_id"])
+        & ~dataset["station_id"].duplicated(keep=False)
+    ]
+    index = candidates.index[-1]
+    record_id = dataset.at[index, "record_id"]
+    dataset.loc[index, list(BALLOT_COLUMNS)] = [25, 0, 0, 0, 0]
+    dataset.loc[index, ["registered_voters", "total_votes"]] = [500, 25]
+    labels.loc[len(labels)] = [record_id, "low_turnout"]
+
+    def statistical_double(prepared):
+        assert "anomaly_type" not in prepared
+        unusual_ids = prepared.loc[prepared["participation_rate"].lt(0.1), "record_id"]
+        return pd.DataFrame(
+            {"record_id": unusual_ids, "method": "statistical", "reason": "Low turnout test fixture"}
+        )
+
+    module_name, function_name = STAGES["statistical"]
+    module = ModuleType(module_name)
+    setattr(module, function_name, statistical_double)
+    monkeypatch.setitem(sys.modules, module_name, module)
+
+    report = run_pipeline(dataset, labels, tmp_path)
+
+    details = report["breakdown"]
+    assert details["by_method"]["rule"]["FN"] == 1
+    assert details["statistical_increment"] == {"additional_tp": 1, "additional_fp": 0}
+    assert report["metrics"]["FN"] == 0
+    by_type = {row["anomaly_type"]: row for row in details["by_anomaly_type"]}
+    assert by_type["low_turnout"] == {
+        "anomaly_type": "low_turnout", "injected": 1,
+        "rule": 0, "statistical": 1, "both": 0, "combined": 1,
+    }
 
 
 def test_complete_mode_reports_missing_modules(tmp_path, absent_team_modules):

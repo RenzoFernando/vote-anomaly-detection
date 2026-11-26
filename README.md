@@ -132,10 +132,12 @@ python -m pytest -q
 The first command reads the simulated CSVs committed in `data/`. The second
 generates a fresh dataset in memory. To use another simulated CSV pair, pass
 `--dataset` and `--labels`. A run exports the processed records, alerts and
-evaluation to `outputs/results/` by default.
+evaluation to `outputs/results/` by default. Open `outputs/results/report.html`
+in a browser to review the confusion matrix, detector comparison, anomaly
+coverage and examples of classification errors.
 
-A partial run can use Diana's validation as the rule baseline. The CLI and
-`metrics.json` identify the stages used. Add `--require-complete` to require
+A partial run can use the consistency validation as the rule baseline. The CLI
+and reports identify the stages used. Add `--require-complete` to require
 both project detectors, exploratory analysis and visualizations. See the
 [integration contract](docs/TECHNICAL_CONTRACT.md) for the module interfaces.
 

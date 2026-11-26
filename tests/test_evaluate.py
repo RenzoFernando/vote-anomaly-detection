@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from src.evaluate import evaluate_detection
+from src.evaluate import evaluate_breakdown, evaluate_detection
 
 
 def test_evaluates_unique_alerted_records_against_sparse_labels():
@@ -59,3 +59,53 @@ def test_rejects_invalid_ids(predicted, actual, population, message):
             pd.DataFrame({"record_id": actual}),
             population,
         )
+
+
+def test_breakdown_counts_overlap_and_exclusive_statistical_findings():
+    alerts = pd.DataFrame(
+        [
+            ("A", "rule", "rule finding"),
+            ("A", "statistical", "same record"),
+            ("B", "statistical", "exclusive detection"),
+            ("D", "statistical", "exclusive false alarm"),
+            ("D", "statistical", "exclusive false alarm"),
+        ],
+        columns=["record_id", "method", "reason"],
+    )
+    labels = pd.DataFrame({"record_id": ["A", "B", "C"], "anomaly_type": ["x", "x", "y"]})
+
+    metrics, details = evaluate_breakdown(alerts, labels, list("ABCDE"), ("rule", "statistical"))
+
+    assert metrics == evaluate_detection(alerts, labels, list("ABCDE"))
+    assert details["by_method"]["rule"]["confusion_matrix"] == [[2, 0], [2, 1]]
+    assert details["by_method"]["statistical"]["confusion_matrix"] == [[1, 1], [1, 2]]
+    assert details["by_anomaly_type"] == [
+        {"anomaly_type": "x", "injected": 2, "rule": 1, "statistical": 2, "both": 1, "combined": 2},
+        {"anomaly_type": "y", "injected": 1, "rule": 0, "statistical": 0, "both": 0, "combined": 0},
+    ]
+    assert details["statistical_increment"] == {"additional_tp": 1, "additional_fp": 1}
+    assert details["false_positives"] == [
+        {"record_id": "D", "findings": [{"method": "statistical", "reason": "exclusive false alarm"}]}
+    ]
+    assert details["false_negatives"] == [{"record_id": "C", "anomaly_type": "y"}]
+
+
+def test_breakdown_distinguishes_pending_method_from_executed_method_without_alerts():
+    alerts = pd.DataFrame(columns=["record_id", "method", "reason"])
+    labels = pd.DataFrame({"record_id": ["A"]})
+
+    _, details = evaluate_breakdown(alerts, labels, ["A", "B"], ("rule",))
+
+    assert details["by_method"]["rule"]["TP"] == 0
+    assert details["by_method"]["statistical"] is None
+    assert details["statistical_increment"] is None
+    assert details["by_anomaly_type"] == [
+        {"anomaly_type": None, "injected": 1, "rule": 0, "statistical": None, "both": None, "combined": 0}
+    ]
+
+
+def test_breakdown_rejects_alerts_from_a_detector_that_did_not_run():
+    alerts = pd.DataFrame({"record_id": ["A"], "method": ["statistical"], "reason": ["IQR"]})
+
+    with pytest.raises(ValueError, match="method that did not run"):
+        evaluate_breakdown(alerts, pd.DataFrame({"record_id": []}), ["A"], ("rule",))

@@ -15,8 +15,9 @@ from src.data_generation import (
     RAW_DATA_PATH,
     generate_dataset,
 )
-from src.evaluate import evaluate_detection
+from src.evaluate import DETECTION_METHODS, evaluate_breakdown
 from src.preprocessing import preprocess_dataset, validate_dataset
+from src.report import render_report
 
 
 ALERT_COLUMNS = ("record_id", "method", "reason")
@@ -68,7 +69,8 @@ def run_pipeline(
         status["rule"] = "diana_validation_baseline"
 
     alert_frames = []
-    for method in ("rule", "statistical"):
+    available_methods = []
+    for method in DETECTION_METHODS:
         detector = stages[method]
         if detector is None:
             continue
@@ -82,9 +84,12 @@ def run_pipeline(
         detected = detected.loc[:, list(ALERT_COLUMNS)].copy()
         detected["record_id"] = detected["record_id"].astype("string").str.strip()
         alert_frames.append(detected)
+        available_methods.append(method)
 
     alerts = pd.concat(alert_frames, ignore_index=True)
-    metrics = evaluate_detection(alerts, ground_truth, prepared["record_id"])
+    metrics, breakdown = evaluate_breakdown(
+        alerts, ground_truth, prepared["record_id"], available_methods
+    )
     summarize = stages["analysis"]
     report = {
         "mode": "partial" if missing else "complete",
@@ -92,6 +97,7 @@ def run_pipeline(
         "alert_rows": len(alerts),
         "stages": status,
         "metrics": metrics,
+        "breakdown": breakdown,
         "analysis": summarize(prepared.copy()) if summarize is not None else None,
         "figures": [],
     }
@@ -121,6 +127,7 @@ def run_pipeline(
         results.mkdir()
         prepared.to_csv(results / "processed_dataset.csv", index=False)
         alerts.to_csv(results / "alerts.csv", index=False)
+        (results / "report.html").write_text(render_report(report), encoding="utf-8")
         (results / "metrics.json").write_text(
             json.dumps(report, indent=2, ensure_ascii=False, allow_nan=False) + "\n",
             encoding="utf-8",
@@ -129,6 +136,7 @@ def run_pipeline(
             *report["figures"],
             "results/processed_dataset.csv",
             "results/alerts.csv",
+            "results/report.html",
             "results/metrics.json",
         ]:
             destination = output_dir / relative_path
@@ -181,6 +189,7 @@ def main() -> None:
     print(f"TP={metrics['TP']}  FP={metrics['FP']}  FN={metrics['FN']}  TN={metrics['TN']}")
     print(f"Precision={metrics['precision']:.4f}  Recall={metrics['recall']:.4f}  F1={metrics['f1']:.4f}")
     print(f"Results: {args.output_dir / 'results'}")
+    print(f"HTML report: {args.output_dir / 'results' / 'report.html'}")
 
 
 if __name__ == "__main__":
